@@ -26,19 +26,33 @@ def count_mora(word):
     return len(processed_word)
 
 
-def extract_tankas(words):
-
+def extract_tanka_candidates(words):
     n = len(words)
-    result = []
+    results = []
     for start in range(n):
         total = 0
         for end in range(start, n):
-            total += words[end][2]
-            if total == 31 and (words[start][1] not in ("記号", "補助記号", "助詞", "助動詞")):
-                result.append(words[start:end+1])
-            elif total > 31:
+
+            after = total + words[end][2]
+
+            # 句またがりがないように判定する
+            if total < 5 and 5 < after:
                 break
-    return result
+            elif total < 12 and 12 < after:
+                break
+            elif total < 17 and 17 < after:
+                break
+            elif total < 24 and 24 < after:
+                break
+            elif total < 31 and 31 < after:
+                break
+
+            total = after
+
+            if total == 31 and (words[start][1] not in ("記号", "補助記号", "助詞", "助動詞")):
+                results.append(words[start:end+1])
+
+    return ["".join(r[0] for r in result) for result in results]
 
 
 def parse(text):
@@ -62,15 +76,14 @@ def parse(text):
                     words.append((node.surface, feature[0], 0))
             node = node.next
 
-    return extract_tankas(words)
+    return words
 
 
 if __name__ == '__main__':
     # Wikipediaの記事タイトルを指定して偶然短歌を抽出
     title = "モロカン派"
     article_text = fetch_wikipedia_article(title)
-    tankas = parse(article_text)
+    tankas = extract_tanka_candidates(parse(article_text))
 
     for tanka in tankas:
-        print("".join(t[0] for t in tanka))
         print(tanka)
